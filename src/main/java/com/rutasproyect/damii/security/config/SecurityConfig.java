@@ -34,8 +34,8 @@ public class SecurityConfig {
 
                 // 3. Reglas de Acceso (Autorización)
                 .authorizeHttpRequests(auth -> auth
-                        // Rutas públicas (Login para que puedan obtener el token)
-                        .requestMatchers("/api/v1/auth/**").permitAll()
+                        // Rutas públicas (Login para que puedan obtener el token + archivos estáticos panel)
+                        .requestMatchers("/api/v1/auth/**", "/admin/**", "/css/**", "/js/**").permitAll()
 
                         // Rutas del Panel Web: Estrictamente para administradores
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")

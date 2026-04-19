@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+    <style>
+        .nav-link.active {
+            background-color: #4f46e5; /* indigo-600 */
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 antialiased font-sans">
+    
+    <div class="flex h-screen overflow-hidden">
+        
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white shadow-xl flex-shrink-0 flex flex-col transition-all duration-300">
+            <div class="h-16 flex items-center justify-center border-b border-gray-100">
+                <span class="text-2xl font-black text-indigo-700 tracking-tight"><i class="fas fa-route mr-2"></i>DamiAdmin</span>
+            </div>
+            
+            <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+                <button onclick="app.showTab('users')" id="tab-users" class="nav-link w-full flex items-center px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-indigo-50 hover:text-indigo-700 transition">
+                    <i class="fas fa-users w-5 mr-3"></i> Usuarios
+                </button>
+                <button onclick="app.showTab('routes')" id="tab-routes" class="nav-link w-full flex items-center px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-indigo-50 hover:text-indigo-700 transition">
+                    <i class="fas fa-map-marked-alt w-5 mr-3"></i> Rutas de Transporte
+                </button>
+                <button onclick="app.showTab('ratings')" id="tab-ratings" class="nav-link w-full flex items-center px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-indigo-50 hover:text-indigo-700 transition">
+                    <i class="fas fa-star w-5 mr-3"></i> Calificaciones
+                </button>
+            </nav>
+
+            <div class="p-4 border-t border-gray-100">
+                <button onclick="app.logout()" class="w-full flex items-center px-4 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition">
+                    <i class="fas fa-sign-out-alt w-5 mr-2"></i> Cerrar Sesión
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col overflow-hidden bg-gray-50 z-0">
+            <!-- Top Header -->
+            <header class="h-16 bg-white shadow-sm flex items-center justify-between px-6 z-10">
+                <h1 id="page-title" class="text-xl font-bold text-gray-800">Cargando...</h1>
+            </header>
+
+            <!-- Main Content Area -->
+            <div class="flex-1 overflow-y-auto p-6">
+                <!-- Vistas de Contenido -->
+                <div id="view-users" class="hidden">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">ID</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Nombre</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Rol</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-users" class="bg-white divide-y divide-gray-200">
+                                    <!-- Inyectado por JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="view-routes" class="hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="grid-routes">
+                        <!-- Inyectado por JS -->
+                    </div>
+                </div>
+
+                <div id="view-ratings" class="hidden">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Ruta</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Usuario</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Puntuación</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Comentario</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Fecha</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-ratings" class="bg-white divide-y divide-gray-200">
+                                    <!-- Inyectado por JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script src="/admin/js/dashboard.js"></script>
+</body>
+</html>
