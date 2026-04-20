@@ -35,10 +35,11 @@ public class MobileRouteService {
         this.reportRepository = reportRepository;
     }
 
-    // 1. Buscador rápido para la App
+    // 1. Buscador rápido para la App (Filtrado para enviar SOLO rutas con paraderos)
+    @org.springframework.cache.annotation.Cacheable("mobileRoutesSearch")
     public List<RouteSummaryDTO> searchRoutes(String query) {
         List<TransportRoute> routes = routeRepository
-                .findByNameContainingIgnoreCaseOrRouteRefContainingIgnoreCase(query, query);
+                .searchActiveRoutesWithStops(query, query);
 
         return routes.stream()
                 .map(r -> new RouteSummaryDTO(

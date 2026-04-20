@@ -94,8 +94,59 @@ const app = {
         });
     },
 
+    currentRouteFilter: 'all',
+    currentRoutePage: 0,
+    totalRoutePages: 0,
+
+    setRouteFilter(filterType) {
+        this.currentRouteFilter = filterType;
+        this.currentRoutePage = 0; // reset to first page on filter change
+        
+        // Update UI buttons
+        document.querySelectorAll('.route-filter').forEach(el => {
+            el.classList.remove('bg-indigo-100', 'text-indigo-700');
+            el.classList.add('text-gray-500');
+        });
+        const activeBtn = document.getElementById(`filter-${filterType}`);
+        if(activeBtn) {
+            activeBtn.classList.remove('text-gray-500', 'hover:text-gray-700');
+            activeBtn.classList.add('bg-indigo-100', 'text-indigo-700');
+        }
+        
+        this.loadRoutes();
+    },
+
+    prevPage() {
+        if (this.currentRoutePage > 0) {
+            this.currentRoutePage--;
+            this.loadRoutes();
+        }
+    },
+
+    nextPage() {
+        if (this.currentRoutePage < this.totalRoutePages - 1) {
+            this.currentRoutePage++;
+            this.loadRoutes();
+        }
+    },
+
     async loadRoutes() {
-        const routes = await this.fetchApi('/api/v1/admin/routes');
+        let endpoint = `/api/v1/admin/routes?page=${this.currentRoutePage}&size=12`;
+        if (this.currentRouteFilter !== 'all') {
+            endpoint += `&filter=${this.currentRouteFilter}`;
+        }
+        
+        const responseData = await this.fetchApi(endpoint);
+        const routes = responseData.content || [];
+        this.totalRoutePages = responseData.totalPages || 1;
+
+        // UI Updates for pagination
+        document.getElementById('page-current').textContent = (this.currentRoutePage + 1);
+        document.getElementById('page-total').textContent = this.totalRoutePages;
+        document.getElementById('item-total').textContent = responseData.totalElements || 0;
+        document.getElementById('btn-prev-page').disabled = this.currentRoutePage === 0;
+        document.getElementById('btn-next-page').disabled = this.currentRoutePage >= this.totalRoutePages - 1;
+
         const grid = document.getElementById('grid-routes');
         grid.innerHTML = '';
         window.currentRoutes = routes; // Store for edit reference

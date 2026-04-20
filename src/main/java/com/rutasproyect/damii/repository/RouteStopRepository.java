@@ -9,5 +9,6 @@ import java.util.List;
 
 @Repository
 public interface RouteStopRepository extends JpaRepository<RouteStop, Integer> {
-    List<RouteStop> findByRouteId(Integer routeId);
+    @org.springframework.data.jpa.repository.Query("SELECT rs FROM RouteStop rs JOIN FETCH rs.stop WHERE rs.route.id = :routeId")
+    List<RouteStop> findByRouteIdWithStops(@org.springframework.data.repository.query.Param("routeId") Integer routeId);
 }

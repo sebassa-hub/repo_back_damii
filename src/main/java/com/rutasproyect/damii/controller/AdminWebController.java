@@ -2,6 +2,10 @@ package com.rutasproyect.damii.controller;
 
 import java.util.List;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.rutasproyect.damii.model.RouteRating;
@@ -45,11 +50,23 @@ public class AdminWebController {
     }
 
     @GetMapping("/routes")
-    public ResponseEntity<List<TransportRoute>> getAllRoutes() {
-        return ResponseEntity.ok(routeRepository.findAll());
+    public ResponseEntity<Page<TransportRoute>> getAllRoutes(
+            @RequestParam(required = false) String filter,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size) {
+        
+        Pageable pageable = PageRequest.of(page, size);
+        
+        if ("with_stops".equalsIgnoreCase(filter)) {
+            return ResponseEntity.ok(routeRepository.findAllRoutesWithStops(pageable));
+        } else if ("without_stops".equalsIgnoreCase(filter)) {
+            return ResponseEntity.ok(routeRepository.findAllRoutesWithoutStops(pageable));
+        }
+        return ResponseEntity.ok(routeRepository.findAll(pageable));
     }
 
     @PutMapping("/routes/{id}")
+    @CacheEvict(value = "mobileRoutesSearch", allEntries = true)
     public ResponseEntity<TransportRoute> updateRoute(@PathVariable Integer id, @RequestBody TransportRoute data) {
         return routeRepository.findById(id).map(existing -> {
             existing.setName(data.getName());
@@ -62,6 +79,7 @@ public class AdminWebController {
     }
 
     @DeleteMapping("/routes/{id}")
+    @CacheEvict(value = "mobileRoutesSearch", allEntries = true)
     public ResponseEntity<Void> deleteRoute(@PathVariable Integer id) {
         if (!routeRepository.existsById(id)) return ResponseEntity.notFound().build();
         routeRepository.deleteById(id);
@@ -70,7 +88,7 @@ public class AdminWebController {
 
     @GetMapping("/routes/{id}/stops")
     public ResponseEntity<List<RouteStop>> getRouteStops(@PathVariable Integer id) {
-        return ResponseEntity.ok(routeStopRepository.findByRouteId(id));
+        return ResponseEntity.ok(routeStopRepository.findByRouteIdWithStops(id));
     }
 
     @GetMapping("/ratings")

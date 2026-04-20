@@ -75,8 +75,39 @@
                 </div>
 
                 <div id="view-routes" class="hidden">
+                    <div class="mb-6 flex justify-end items-center">
+                        <div class="flex space-x-2 bg-white rounded-lg p-1 shadow-sm border border-gray-200">
+                            <button onclick="app.setRouteFilter('all')" id="filter-all" class="route-filter px-4 py-2 text-sm font-medium rounded-md bg-indigo-100 text-indigo-700">Todas</button>
+                            <button onclick="app.setRouteFilter('with_stops')" id="filter-with_stops" class="route-filter px-4 py-2 text-sm font-medium rounded-md text-gray-500 hover:text-gray-700">Con Paraderos</button>
+                            <button onclick="app.setRouteFilter('without_stops')" id="filter-without_stops" class="route-filter px-4 py-2 text-sm font-medium rounded-md text-gray-500 hover:text-gray-700">Sin Paraderos</button>
+                        </div>
+                    </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="grid-routes">
                         <!-- Inyectado por JS -->
+                    </div>
+                    
+                    <!-- Pagination Controls -->
+                    <div class="mt-8 flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 rounded-lg shadow-sm">
+                        <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                            <div>
+                                <p class="text-sm text-gray-700">
+                                    Página <span class="font-medium" id="page-current">1</span> de <span class="font-medium" id="page-total">1</span>
+                                    (Total: <span class="font-medium" id="item-total">0</span> rutas)
+                                </p>
+                            </div>
+                            <div>
+                                <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                                    <button onclick="app.prevPage()" id="btn-prev-page" class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed">
+                                        <span class="sr-only">Anterior</span>
+                                        <i class="fas fa-chevron-left h-5 w-5 pt-0.5"></i>
+                                    </button>
+                                    <button onclick="app.nextPage()" id="btn-next-page" class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed">
+                                        <span class="sr-only">Siguiente</span>
+                                        <i class="fas fa-chevron-right h-5 w-5 pt-0.5"></i>
+                                    </button>
+                                </nav>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
