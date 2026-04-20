@@ -35,4 +35,7 @@ public class RouteStop {
 
     @Column(name = "stop_order")
     private Integer stopOrder;
+
+    @Column(name = "direction", length = 20)
+    private String direction;
 }

@@ -246,6 +246,11 @@ const app = {
         document.getElementById('mcontent-stops').classList.add('hidden');
         
         document.getElementById(`mcontent-${tab}`).classList.remove('hidden');
+
+        // Wake up map when explicitly switching to stops tab
+        if (tab === 'stops' && this.mapInstance) {
+            setTimeout(() => this.mapInstance.invalidateSize(), 150);
+        }
     },
 
     async saveRoute() {
@@ -277,12 +282,55 @@ const app = {
         }
     },
 
+    // Leaflet Map state
+    mapInstance: null,
+    mapMarkers: [],
+    mapPolyline: null,
+
+    renderMap(stops) {
+        if (!this.mapInstance) {
+            this.mapInstance = L.map('route-map').setView([-12.046374, -77.042793], 11);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap'
+            }).addTo(this.mapInstance);
+        }
+
+        // Clear existing markers and lines
+        this.mapMarkers.forEach(m => this.mapInstance.removeLayer(m));
+        if (this.mapPolyline) this.mapInstance.removeLayer(this.mapPolyline);
+        this.mapMarkers = [];
+
+        const coordinates = [];
+        
+        stops.forEach(routeStop => {
+            const stop = routeStop.stop;
+            if (!stop || !stop.latitude || !stop.longitude) return;
+            
+            const latLng = [stop.latitude, stop.longitude];
+            coordinates.push(latLng);
+            
+            const marker = L.circleMarker(latLng, {radius: 6, color: 'indigo'})
+                .bindPopup(`<b>#${routeStop.stopOrder}</b>: ${stop.name}`)
+                .addTo(this.mapInstance);
+            this.mapMarkers.push(marker);
+        });
+
+        if (coordinates.length > 0) {
+            // Draw sequenced circuit polyline
+            this.mapPolyline = L.polyline(coordinates, {color: '#4f46e5', weight: 4, opacity: 0.7}).addTo(this.mapInstance);
+            this.mapInstance.fitBounds(this.mapPolyline.getBounds(), {padding: [20, 20]});
+        }
+    },
+
     async loadStopsForRoute(id) {
         const container = document.getElementById('stops-list');
-        container.innerHTML = '<li class="py-4 flex text-center text-sm text-indigo-500">Cargando paraderos...</li>';
+        container.innerHTML = '<li class="py-4 flex text-center text-sm text-indigo-500">Cargando paraderos y redibujando mapa...</li>';
         
         try {
             const stops = await this.fetchApi(`/api/v1/admin/routes/${id}/stops`);
+            
+            this.renderMap(stops);
+
             if (stops.length === 0) {
                 container.innerHTML = '<li class="py-4 flex text-center text-sm text-gray-500">Esta ruta no tiene paraderos asignados.</li>';
                 return;
@@ -292,20 +340,110 @@ const app = {
             stops.forEach(routeStop => {
                 const stop = routeStop.stop;
                 if(!stop) return;
+                
+                // Color code markers based on IDA or VUELTA for leafet map if present
+                if (routeStop.direction === 'VUELTA') {
+                    const markerVuelta = L.circleMarker([stop.latitude, stop.longitude], {radius: 6, color: 'orange'})
+                        .bindPopup(`<b>#${routeStop.stopOrder} (Vuelta)</b>: ${stop.name}`)
+                        .addTo(this.mapInstance);
+                    this.mapMarkers.push(markerVuelta);
+                }
+
+                const dirSelection = routeStop.direction === 'VUELTA' ? 
+                    `<option value="IDA">IDA</option><option value="VUELTA" selected>VUELTA</option>` : 
+                    `<option value="IDA" selected>IDA</option><option value="VUELTA">VUELTA</option>`;
+
+                // Construct embedded editing UI
                 container.innerHTML += `
-                    <li class="py-3 flex justify-between items-center bg-white">
-                        <div class="flex items-center">
-                            <span class="bg-gray-100 text-gray-600 font-bold px-3 py-1 rounded w-8 text-center mr-3 text-xs">#${routeStop.stopOrder || '-'}</span>
-                            <div>
-                                <p class="text-sm font-medium text-gray-900">${stop.name}</p>
-                                <p class="text-xs text-gray-500"><i class="fas fa-map-marker-alt"></i> Lat: ${stop.lat}, Lng: ${stop.lng}</p>
+                    <li class="py-4 grid gap-2 bg-white border-b border-gray-100 last:border-0 pl-1">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-2 flex-1">
+                                <input type="number" id="rs-order-${routeStop.id}" value="${routeStop.stopOrder || ''}" class="bg-indigo-50 text-indigo-700 font-bold px-1 py-1 rounded text-xs w-12 text-center border-gray-200">
+                                <input type="text" id="stop-name-${stop.id}" value="${stop.name}" class="text-sm font-medium text-gray-900 border border-transparent hover:border-gray-300 focus:border-indigo-500 rounded px-1 py-0.5 w-full flex-1">
+                                <select id="rs-dir-${routeStop.id}" class="text-xs border-gray-300 rounded px-1 py-0.5 w-24">${dirSelection}</select>
                             </div>
+                            <button onclick="app.deleteRouteStop(${routeStop.id}, ${id})" class="ml-2 text-red-500 hover:text-red-700 bg-red-50 p-1.5 rounded" title="Borrar del Circuito">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                        <div class="flex items-center space-x-2 text-xs">
+                            <span class="text-gray-500 font-medium">Lat:</span>
+                            <input type="number" step="0.000001" id="stop-lat-${stop.id}" value="${stop.latitude}" class="border border-gray-300 rounded px-1 py-0.5 w-24">
+                            <span class="text-gray-500 font-medium ml-2">Lng:</span>
+                            <input type="number" step="0.000001" id="stop-lng-${stop.id}" value="${stop.longitude}" class="border border-gray-300 rounded px-1 py-0.5 w-24">
+                            
+                            <button onclick="app.updateStopReal(${stop.id}, ${routeStop.id}, ${id})" class="ml-auto bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-2 py-1 rounded font-medium transition cursor-pointer">
+                                Guardar
+                            </button>
                         </div>
                     </li>
                 `;
             });
         } catch(e) {
             container.innerHTML = '<li class="py-4 flex text-center text-sm text-red-500">Error al cargar paraderos.</li>';
+        }
+    },
+
+    async createNewStop() {
+        const routeId = document.getElementById('edit-route-id').value;
+        const name = document.getElementById('new-stop-name').value;
+        const order = parseInt(document.getElementById('new-stop-order').value) || 0;
+        const lat = parseFloat(document.getElementById('new-stop-lat').value);
+        const lng = parseFloat(document.getElementById('new-stop-lng').value);
+        const dir = document.getElementById('new-stop-direction').value;
+
+        if (!name || isNaN(lat) || isNaN(lng)) return alert("Rellena el nombre, latitud y longitud correctamente.");
+
+        try {
+            await this.fetchApi(`/api/v1/admin/routes/${routeId}/stops`, {
+                method: 'POST',
+                body: JSON.stringify({ name: name, latitude: lat, longitude: lng, stopOrder: order, direction: dir })
+            });
+            // Clear inputs
+            document.getElementById('new-stop-name').value = '';
+            document.getElementById('new-stop-order').value = '';
+            
+            this.loadStopsForRoute(routeId);
+        } catch(e) {
+            alert('Error creando paradero: ' + e.message);
+        }
+    },
+
+    async updateStopReal(stopId, routeStopId, routeId) {
+        const name = document.getElementById(`stop-name-${stopId}`).value;
+        const lat = parseFloat(document.getElementById(`stop-lat-${stopId}`).value);
+        const lng = parseFloat(document.getElementById(`stop-lng-${stopId}`).value);
+        const order = parseInt(document.getElementById(`rs-order-${routeStopId}`).value) || 0;
+        const dir = document.getElementById(`rs-dir-${routeStopId}`).value;
+        
+        try {
+            // Update stop physical data
+            await this.fetchApi(`/api/v1/admin/stops/${stopId}`, {
+                method: 'PUT',
+                body: JSON.stringify({ name: name, latitude: lat, longitude: lng })
+            });
+
+            // Update routestop relation
+            await this.fetchApi(`/api/v1/admin/route-stops/${routeStopId}`, {
+                method: 'PUT',
+                body: JSON.stringify({ stopOrder: order, direction: dir })
+            });
+
+            this.loadStopsForRoute(routeId);
+        } catch(e) {
+            alert('Error al actualizar el paradero: ' + e.message);
+        }
+    },
+
+    async deleteRouteStop(routeStopId, routeId) {
+        if(!confirm("¿Deseas borrar esta parada del circuito? Se rearmará el trazado en el mapa.")) return;
+        try {
+            await this.fetchApi(`/api/v1/admin/route-stops/${routeStopId}`, {
+                method: 'DELETE'
+            });
+            this.loadStopsForRoute(routeId);
+        } catch(e) {
+            alert('Error al borrar: ' + e.message);
         }
     }
 };

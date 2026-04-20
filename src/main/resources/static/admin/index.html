@@ -7,11 +7,15 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         .nav-link.active {
             background-color: #4f46e5; /* indigo-600 */
             color: #ffffff;
         }
+        #route-map { height: 250px; width: 100%; border-radius: 0.5rem; margin-bottom: 1rem; z-index: 10; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 antialiased font-sans">
@@ -201,11 +205,40 @@
 
                     <!-- Stops List -->
                     <div id="mcontent-stops" class="hidden">
-                        <div class="h-64 overflow-y-auto pr-2">
+                        <div id="route-map"></div>
+                        <div class="h-48 overflow-y-auto pr-2 mb-3">
                             <ul id="stops-list" class="divide-y divide-gray-200">
                                 <!-- JS Inject -->
                                 <li class="py-4 flex text-center text-sm text-gray-500">Cargando paraderos...</li>
                             </ul>
+                        </div>
+                        
+                        <!-- Panel de Creación de Paradero -->
+                        <div class="bg-indigo-50 p-3 rounded-lg border border-indigo-100">
+                            <h4 class="text-xs font-bold text-indigo-800 uppercase tracking-wide mb-2"><i class="fas fa-plus-circle mr-1"></i> Añadir Paradero Nuevo</h4>
+                            <div class="grid grid-cols-12 gap-2">
+                                <div class="col-span-12 sm:col-span-5">
+                                    <input type="text" id="new-stop-name" placeholder="Nombre de Paradero" class="w-full text-sm border-gray-300 rounded px-2 py-1.5 focus:ring-indigo-500 focus:border-indigo-500">
+                                </div>
+                                <div class="col-span-4 sm:col-span-2">
+                                    <input type="number" id="new-stop-order" placeholder="Orden #" class="w-full text-sm border-gray-300 rounded px-2 py-1.5 focus:ring-indigo-500 focus:border-indigo-500">
+                                </div>
+                                <div class="col-span-8 sm:col-span-5">
+                                    <select id="new-stop-direction" class="w-full text-sm border-gray-300 rounded px-2 py-1.5 focus:ring-indigo-500 focus:border-indigo-500">
+                                        <option value="IDA">Trayecto: IDA</option>
+                                        <option value="VUELTA">Trayecto: VUELTA</option>
+                                    </select>
+                                </div>
+                                <div class="col-span-6">
+                                    <input type="number" step="0.000001" id="new-stop-lat" placeholder="Latitud (-12.xxxx)" class="w-full text-sm border-gray-300 rounded px-2 py-1.5 focus:ring-indigo-500 focus:border-indigo-500">
+                                </div>
+                                <div class="col-span-6">
+                                    <input type="number" step="0.000001" id="new-stop-lng" placeholder="Longitud (-77.xxxx)" class="w-full text-sm border-gray-300 rounded px-2 py-1.5 focus:ring-indigo-500 focus:border-indigo-500">
+                                </div>
+                            </div>
+                            <button onclick="app.createNewStop()" class="mt-2 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-1.5 rounded text-sm transition shadow-sm">
+                                Registrar Paradero
+                            </button>
                         </div>
                     </div>
 
