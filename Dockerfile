@@ -36,4 +36,4 @@ COPY --from=builder /app/target/*.jar dadmin-backend.jar
 EXPOSE 8080
 
 # Comando Maestro que arranca tu SpringBoot en la Mac (o cualquier lado)
-ENTRYPOINT ["java", "-jar", "dadmin-backend.jar"]
+ENTRYPOINT ["sh", "-c", "java -Dserver.port=${PORT:8080} -jar dadmin-backend.jar"]
