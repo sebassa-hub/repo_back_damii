@@ -10,7 +10,7 @@ import com.rutasproyect.damii.model.Report;
 import com.rutasproyect.damii.service.ReportService;
 
 @RestController
-@RequestMapping("/api/v1/mobile/reports")
+@RequestMapping("/api/v1/mobile/private/reports")
 public class ReportController {
 
     private final ReportService reportService;

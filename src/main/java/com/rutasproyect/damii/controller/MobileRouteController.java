@@ -11,7 +11,7 @@ import com.rutasproyect.damii.service.MobileRouteService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/mobile")
+@RequestMapping("/api/v1/mobile/public")
 public class MobileRouteController {
 
     private final MobileRouteService routeService;

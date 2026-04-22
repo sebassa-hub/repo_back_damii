@@ -40,8 +40,11 @@ public class SecurityConfig {
                         // Rutas del Panel Web: Estrictamente para administradores
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
 
-                        // Rutas de la App iOS: Accesible para usuarios y administradores
-                        .requestMatchers("/api/v1/mobile/**").hasAnyRole("USER", "ADMIN")
+                        // Rutas de la App iOS (Públicas)
+                        .requestMatchers("/api/v1/mobile/public/**").permitAll()
+
+                        // Rutas de la App iOS (Privadas: Favoritos, Comentarios, Reportes)
+                        .requestMatchers("/api/v1/mobile/private/**").hasAnyRole("USER", "ADMIN")
 
                         // Cualquier otra petición no mapeada arriba, se bloquea por defecto
                         .anyRequest().authenticated())

@@ -2,7 +2,6 @@ package com.rutasproyect.damii.model;
 
 import java.time.LocalDateTime;
 
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -18,27 +17,27 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "route_ratings")
+@Table(name = "route_comments")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class RouteRating {
+public class RouteComment {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = true)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "route_id", nullable = false)
     private TransportRoute route;
 
-    @Column(nullable = false)
-    private Integer rating;
-
+    @Column(columnDefinition = "TEXT", nullable = false)
+    private String comment;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
