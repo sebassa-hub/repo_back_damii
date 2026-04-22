@@ -23,6 +23,12 @@ import com.rutasproyect.damii.model.User;
 import com.rutasproyect.damii.repository.RouteRatingRepository;
 import com.rutasproyect.damii.repository.RouteStopRepository;
 import com.rutasproyect.damii.repository.TransportRouteRepository;
+import com.rutasproyect.damii.model.UserComment;
+import com.rutasproyect.damii.model.RouteComment;
+import com.rutasproyect.damii.model.Report;
+import com.rutasproyect.damii.repository.UserCommentRepository;
+import com.rutasproyect.damii.repository.RouteCommentRepository;
+import com.rutasproyect.damii.repository.ReportRepository;
 import com.rutasproyect.damii.repository.UserRepository;
 
 @RestController
@@ -34,17 +40,26 @@ public class AdminWebController {
     private final RouteRatingRepository ratingRepository;
     private final RouteStopRepository routeStopRepository;
     private final com.rutasproyect.damii.repository.StopRepository stopRepository;
+    private final UserCommentRepository userCommentRepository;
+    private final RouteCommentRepository routeCommentRepository;
+    private final ReportRepository reportRepository;
 
     public AdminWebController(UserRepository userRepository, 
                               TransportRouteRepository routeRepository, 
                               RouteRatingRepository ratingRepository,
                               RouteStopRepository routeStopRepository,
-                              com.rutasproyect.damii.repository.StopRepository stopRepository) {
+                              com.rutasproyect.damii.repository.StopRepository stopRepository,
+                              UserCommentRepository userCommentRepository,
+                              RouteCommentRepository routeCommentRepository,
+                              ReportRepository reportRepository) {
         this.userRepository = userRepository;
         this.routeRepository = routeRepository;
         this.ratingRepository = ratingRepository;
         this.routeStopRepository = routeStopRepository;
         this.stopRepository = stopRepository;
+        this.userCommentRepository = userCommentRepository;
+        this.routeCommentRepository = routeCommentRepository;
+        this.reportRepository = reportRepository;
     }
 
     @GetMapping("/users")
@@ -155,5 +170,20 @@ public class AdminWebController {
     @GetMapping("/ratings")
     public ResponseEntity<List<RouteRating>> getAllRatings() {
         return ResponseEntity.ok(ratingRepository.findAll());
+    }
+
+    @GetMapping("/comments/company")
+    public ResponseEntity<List<UserComment>> getCompanyComments() {
+        return ResponseEntity.ok(userCommentRepository.findAll());
+    }
+
+    @GetMapping("/comments/route")
+    public ResponseEntity<List<RouteComment>> getRouteComments() {
+        return ResponseEntity.ok(routeCommentRepository.findAll());
+    }
+
+    @GetMapping("/reports")
+    public ResponseEntity<List<Report>> getReports() {
+        return ResponseEntity.ok(reportRepository.findAll());
     }
 }

@@ -58,14 +58,19 @@ const app = {
         const titles = {
             'users': 'Gestión de Usuarios Activos',
             'routes': 'Panel de Rutas de Transporte',
-            'ratings': 'Actividad y Calificaciones'
+            'interactions': 'Interacciones de Usuarios',
+            'optimization': 'Optimización Global de Datos'
         };
         document.getElementById('page-title').textContent = titles[tabName];
 
         // Fetch Data
         if (tabName === 'users') this.loadUsers();
         if (tabName === 'routes') this.loadRoutes();
-        if (tabName === 'ratings') this.loadRatings();
+        if (tabName === 'interactions') {
+            if(!this.currentInteractionSubtab) this.currentInteractionSubtab = 'ratings';
+            this.setInteractionSubtab(this.currentInteractionSubtab);
+        }
+        // Optimization doesn't need to fetch data on load, except maybe status if a task is running
     },
 
     async loadUsers() {
@@ -181,32 +186,87 @@ const app = {
         });
     },
 
-    async loadRatings() {
-        const ratings = await this.fetchApi('/api/v1/admin/ratings');
-        const tbody = document.getElementById('table-ratings');
-        tbody.innerHTML = '';
-        
-        ratings.forEach(item => {
-            let stars = '';
-            for(let i=0; i<5; i++) {
-                if(i < item.rating) stars += '<i class="fas fa-star text-yellow-400"></i>';
-                else stars += '<i class="far fa-star text-gray-300"></i>';
-            }
+    currentInteractionSubtab: null,
 
-            const userName = item.user ? item.user.name : '<span class="text-gray-400">Anónimo</span>';
-            const routeName = item.route ? item.route.name : 'Ruta Desconocida';
-            const comment = item.comment || '<em class="text-gray-400">Sin comentarios</em>';
-            
-            tbody.innerHTML += `
-                <tr class="hover:bg-gray-50 transition">
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${routeName}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${userName}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm">${stars}</td>
-                    <td class="px-6 py-4 text-sm text-gray-500 max-w-xs truncate" title="${item.comment}">${comment}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(item.createdAt).toLocaleDateString()}</td>
-                </tr>
-            `;
+    setInteractionSubtab(tab) {
+        this.currentInteractionSubtab = tab;
+        document.querySelectorAll('.interaction-tab').forEach(el => {
+            el.classList.remove('border-indigo-500', 'text-indigo-600');
+            el.classList.add('border-transparent', 'text-gray-500');
         });
+        const active = document.getElementById(`subtab-${tab}`);
+        if(active) {
+            active.classList.remove('border-transparent', 'text-gray-500');
+            active.classList.add('border-indigo-500', 'text-indigo-600');
+        }
+        this.loadInteractions(tab);
+    },
+
+    async loadInteractions(tab) {
+        const table = document.getElementById('table-interactions');
+        table.innerHTML = '<div class="p-4 text-gray-500">Cargando...</div>';
+        
+        try {
+            let html = '';
+            if (tab === 'ratings') {
+                const data = await this.fetchApi('/api/v1/admin/ratings');
+                html += `<thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Ruta</th><th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Usuario</th><th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Puntos</th><th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Fecha</th></tr></thead><tbody class="bg-white divide-y divide-gray-200">`;
+                data.forEach(item => {
+                    const userName = item.user ? item.user.name : 'Anónimo';
+                    const routeName = item.route ? item.route.name : 'Desconocida';
+                    html += `<tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 text-sm font-medium text-gray-900">${routeName}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">${userName}</td>
+                        <td class="px-6 py-4 text-sm text-yellow-500 font-bold">${item.rating} / 5</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">${new Date(item.createdAt).toLocaleDateString()}</td>
+                    </tr>`;
+                });
+                html += `</tbody>`;
+            } else if (tab === 'route-comments') {
+                const data = await this.fetchApi('/api/v1/admin/comments/route');
+                html += `<thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Ruta</th><th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Usuario</th><th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Comentario</th><th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Fecha</th></tr></thead><tbody class="bg-white divide-y divide-gray-200">`;
+                data.forEach(item => {
+                    const userName = item.user ? item.user.name : 'Anónimo';
+                    const routeName = item.route ? item.route.name : 'Desconocida';
+                    html += `<tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 text-sm font-medium text-gray-900">${routeName}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">${userName}</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">${item.comment}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">${new Date(item.createdAt).toLocaleDateString()}</td>
+                    </tr>`;
+                });
+                html += `</tbody>`;
+            } else if (tab === 'company-comments') {
+                const data = await this.fetchApi('/api/v1/admin/comments/company');
+                html += `<thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Empresa (Network)</th><th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Usuario</th><th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Comentario</th><th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Fecha</th></tr></thead><tbody class="bg-white divide-y divide-gray-200">`;
+                data.forEach(item => {
+                    const userName = item.user ? item.user.name : 'Anónimo';
+                    html += `<tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 text-sm font-medium text-gray-900">${item.network}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">${userName}</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">${item.comment}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">${new Date(item.createdAt).toLocaleDateString()}</td>
+                    </tr>`;
+                });
+                html += `</tbody>`;
+            } else if (tab === 'reports') {
+                const data = await this.fetchApi('/api/v1/admin/reports');
+                html += `<thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Tipo</th><th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Ubicación</th><th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Usuario</th><th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Fecha</th></tr></thead><tbody class="bg-white divide-y divide-gray-200">`;
+                data.forEach(item => {
+                    const userName = item.user ? item.user.name : 'Anónimo';
+                    html += `<tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 text-sm font-bold text-red-600">${item.reportType}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">Lat: ${item.latitude}, Lng: ${item.longitude}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">${userName}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">${new Date(item.createdAt).toLocaleDateString()}</td>
+                    </tr>`;
+                });
+                html += `</tbody>`;
+            }
+            table.innerHTML = html;
+        } catch (e) {
+            table.innerHTML = `<div class="p-4 text-red-500">Error cargando datos: ${e.message}</div>`;
+        }
     },
 
     // Modal Methods
@@ -444,6 +504,64 @@ const app = {
             this.loadStopsForRoute(routeId);
         } catch(e) {
             alert('Error al borrar: ' + e.message);
+        }
+    },
+
+    // --- Optimization Logic ---
+    optimizationInterval: null,
+
+    async runOptimization(taskType) {
+        if(!confirm(`¿Estás seguro de ejecutar el proceso: ${taskType}? Esto puede tardar varios minutos.`)) return;
+
+        try {
+            await this.fetchApi(`/api/v1/admin/optimize/run-all/${taskType}`, { method: 'POST' });
+            
+            // Iniciar Polling
+            if(this.optimizationInterval) clearInterval(this.optimizationInterval);
+            
+            this.optimizationInterval = setInterval(() => {
+                this.checkOptimizationStatus(`global_${taskType.replace('-', '_')}`);
+            }, 1000);
+
+            document.getElementById('opt-progress-text').textContent = 'Iniciando proceso...';
+            document.getElementById('opt-progress-bar').style.width = '0%';
+        } catch(e) {
+            alert('Error al iniciar optimización: ' + e.message);
+        }
+    },
+
+    async checkOptimizationStatus(taskId) {
+        try {
+            const statusInfo = await this.fetchApi(`/api/v1/admin/optimize/status/${taskId}`);
+            const bar = document.getElementById('opt-progress-bar');
+            const text = document.getElementById('opt-progress-text');
+
+            if (statusInfo.status === 'NOT_STARTED') return;
+
+            let percentage = 0;
+            if (statusInfo.total > 0) {
+                percentage = Math.round((statusInfo.current / statusInfo.total) * 100);
+            }
+
+            bar.style.width = `${percentage}%`;
+            text.textContent = `[${percentage}%] ${statusInfo.message} (${statusInfo.current} de ${statusInfo.total})`;
+
+            if (statusInfo.status === 'COMPLETED' || statusInfo.status === 'ERROR') {
+                clearInterval(this.optimizationInterval);
+                text.textContent += ' - ¡Proceso Finalizado!';
+                if(statusInfo.status === 'ERROR') bar.classList.replace('bg-indigo-600', 'bg-red-500');
+                else bar.classList.replace('bg-indigo-600', 'bg-green-500');
+                
+                setTimeout(() => {
+                    bar.style.width = '0%';
+                    bar.classList.remove('bg-green-500', 'bg-red-500');
+                    bar.classList.add('bg-indigo-600');
+                    text.textContent = 'Esperando iniciar nuevo proceso...';
+                }, 5000);
+            }
+        } catch(e) {
+            console.error('Error polling status:', e);
+            clearInterval(this.optimizationInterval);
         }
     }
 };

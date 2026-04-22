@@ -35,8 +35,11 @@
                 <button onclick="app.showTab('routes')" id="tab-routes" class="nav-link w-full flex items-center px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-indigo-50 hover:text-indigo-700 transition">
                     <i class="fas fa-map-marked-alt w-5 mr-3"></i> Rutas de Transporte
                 </button>
-                <button onclick="app.showTab('ratings')" id="tab-ratings" class="nav-link w-full flex items-center px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-indigo-50 hover:text-indigo-700 transition">
-                    <i class="fas fa-star w-5 mr-3"></i> Calificaciones
+                <button onclick="app.showTab('interactions')" id="tab-interactions" class="nav-link w-full flex items-center px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-indigo-50 hover:text-indigo-700 transition">
+                    <i class="fas fa-comments w-5 mr-3"></i> Interacciones
+                </button>
+                <button onclick="app.showTab('optimization')" id="tab-optimization" class="nav-link w-full flex items-center px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-indigo-50 hover:text-indigo-700 transition">
+                    <i class="fas fa-magic w-5 mr-3"></i> Optimización de Datos
                 </button>
             </nav>
 
@@ -115,23 +118,55 @@
                     </div>
                 </div>
 
-                <div id="view-ratings" class="hidden">
+                <div id="view-interactions" class="hidden">
+                    <div class="mb-4 border-b border-gray-200">
+                        <nav class="-mb-px flex space-x-8">
+                            <button onclick="app.setInteractionSubtab('ratings')" id="subtab-ratings" class="interaction-tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-indigo-500 text-indigo-600">Calificaciones de Rutas</button>
+                            <button onclick="app.setInteractionSubtab('route-comments')" id="subtab-route-comments" class="interaction-tab whitespace-nowrap py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700">Comentarios (Rutas)</button>
+                            <button onclick="app.setInteractionSubtab('company-comments')" id="subtab-company-comments" class="interaction-tab whitespace-nowrap py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700">Comentarios (Empresas)</button>
+                            <button onclick="app.setInteractionSubtab('reports')" id="subtab-reports" class="interaction-tab whitespace-nowrap py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700">Reportes de Alerta</button>
+                        </nav>
+                    </div>
+
                     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                         <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Ruta</th>
-                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Usuario</th>
-                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Puntuación</th>
-                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Comentario</th>
-                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Fecha</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="table-ratings" class="bg-white divide-y divide-gray-200">
-                                    <!-- Inyectado por JS -->
-                                </tbody>
+                            <table class="min-w-full divide-y divide-gray-200" id="table-interactions">
+                                <!-- Generado por JS -->
                             </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="view-optimization" class="hidden">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
+                        <h2 class="text-lg font-bold text-gray-800 mb-2">Estado de Optimización Global</h2>
+                        <div class="w-full bg-gray-200 rounded-full h-4 mb-2 overflow-hidden">
+                            <div class="bg-indigo-600 h-4 rounded-full transition-all duration-500" id="opt-progress-bar" style="width: 0%"></div>
+                        </div>
+                        <p class="text-sm font-medium text-gray-600" id="opt-progress-text">Esperando iniciar proceso...</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- Renombrado -->
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col">
+                            <div class="text-indigo-600 mb-4"><i class="fas fa-spell-check text-3xl"></i></div>
+                            <h3 class="text-lg font-bold mb-2">Limpiar Nombres (Stops)</h3>
+                            <p class="text-sm text-gray-500 mb-4 flex-1">Busca paraderos con nombres numéricos o inválidos y utiliza Reverse Geocoding (Nominatim) para colocar el nombre real de la calle.</p>
+                            <button onclick="app.runOptimization('stop-names')" class="w-full bg-indigo-50 text-indigo-700 font-bold py-2 rounded hover:bg-indigo-100 transition">Iniciar Proceso</button>
+                        </div>
+                        <!-- Split -->
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col">
+                            <div class="text-indigo-600 mb-4"><i class="fas fa-arrows-alt-h text-3xl"></i></div>
+                            <h3 class="text-lg font-bold mb-2">Separar Ida y Vuelta</h3>
+                            <p class="text-sm text-gray-500 mb-4 flex-1">Analiza todas las rutas CON paraderos. Calcula matemáticamente el punto más lejano para dividir el recorrido en "ida" y "vuelta".</p>
+                            <button onclick="app.runOptimization('split-routes')" class="w-full bg-indigo-50 text-indigo-700 font-bold py-2 rounded hover:bg-indigo-100 transition">Iniciar Proceso</button>
+                        </div>
+                        <!-- Match -->
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col">
+                            <div class="text-indigo-600 mb-4"><i class="fas fa-road text-3xl"></i></div>
+                            <h3 class="text-lg font-bold mb-2">Alinear Calles (Map-Match)</h3>
+                            <p class="text-sm text-gray-500 mb-4 flex-1">Envía los puntos de todas las rutas a OSRM para trazar las líneas exactas por donde va la pista. Recrea la geometría visual.</p>
+                            <button onclick="app.runOptimization('match-routes')" class="w-full bg-indigo-50 text-indigo-700 font-bold py-2 rounded hover:bg-indigo-100 transition">Iniciar Proceso</button>
                         </div>
                     </div>
                 </div>
