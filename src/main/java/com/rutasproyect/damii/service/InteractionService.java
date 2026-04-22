@@ -54,17 +54,17 @@ public class InteractionService {
         User user = getUserByEmail(userEmail);
         TransportRoute route = getRouteById(routeId);
 
-        return favoriteRouteRepository.findByUserIdAndRouteId(user.getId(), route.getId())
-                .map(existingFavorite -> {
-                    favoriteRouteRepository.delete(existingFavorite);
-                    return null; // Devuelve null si lo elimina (toggle off)
-                })
-                .orElseGet(() -> {
-                    FavoriteRoute newFav = new FavoriteRoute();
-                    newFav.setUser(user);
-                    newFav.setRoute(route);
-                    return favoriteRouteRepository.save(newFav); // Devuelve la entidad si lo crea (toggle on)
-                });
+        var existingFavorite = favoriteRouteRepository.findByUserIdAndRouteId(user.getId(), route.getId());
+        
+        if (existingFavorite.isPresent()) {
+            favoriteRouteRepository.delete(existingFavorite.get());
+            return null; // Devuelve null si lo elimina (toggle off)
+        } else {
+            FavoriteRoute newFav = new FavoriteRoute();
+            newFav.setUser(user);
+            newFav.setRoute(route);
+            return favoriteRouteRepository.save(newFav); // Devuelve la entidad si lo crea (toggle on)
+        }
     }
 
     public List<FavoriteRoute> getUserFavorites(String userEmail) {
