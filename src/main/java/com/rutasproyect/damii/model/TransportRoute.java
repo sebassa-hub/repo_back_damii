@@ -32,4 +32,10 @@ public class TransportRoute {
 
     @Column(name = "risk_level")
     private Double riskLevel = 1.0;
+
+    private String origin;
+
+    private String destination;
+
+    private String status = "ACTIVA";
 }

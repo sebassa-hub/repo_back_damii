@@ -16,9 +16,12 @@ import com.rutasproyect.damii.service.DataOptimizationService;
 public class AdminOptimizationController {
 
     private final DataOptimizationService optimizationService;
+    private final com.rutasproyect.damii.service.WikipediaScraperService scraperService;
 
-    public AdminOptimizationController(DataOptimizationService optimizationService) {
+    public AdminOptimizationController(DataOptimizationService optimizationService, 
+                                       com.rutasproyect.damii.service.WikipediaScraperService scraperService) {
         this.optimizationService = optimizationService;
+        this.scraperService = scraperService;
     }
 
     @PostMapping("/stops/names")
@@ -55,6 +58,12 @@ public class AdminOptimizationController {
     public ResponseEntity<?> runGlobalMatchRoutes() {
         optimizationService.runGlobalRouteMatch();
         return ResponseEntity.ok(Map.of("message", "Proceso global de map-matching iniciado"));
+    }
+
+    @PostMapping("/run-all/wiki-sync")
+    public ResponseEntity<?> runWikiSync() {
+        scraperService.scrapeAndSyncRoutes();
+        return ResponseEntity.ok(Map.of("message", "Proceso global de sincronización de Wikipedia iniciado"));
     }
 
     @GetMapping("/status/{taskId}")

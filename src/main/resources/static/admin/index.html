@@ -168,6 +168,13 @@
                             <p class="text-sm text-gray-500 mb-4 flex-1">Envía los puntos de todas las rutas a OSRM para trazar las líneas exactas por donde va la pista. Recrea la geometría visual.</p>
                             <button onclick="app.runOptimization('match-routes')" class="w-full bg-indigo-50 text-indigo-700 font-bold py-2 rounded hover:bg-indigo-100 transition">Iniciar Proceso</button>
                         </div>
+                        <!-- Wikipedia Sync -->
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col">
+                            <div class="text-indigo-600 mb-4"><i class="fab fa-wikipedia-w text-3xl"></i></div>
+                            <h3 class="text-lg font-bold mb-2">Catálogo Wikipedia</h3>
+                            <p class="text-sm text-gray-500 mb-4 flex-1">Extrae automáticamente todas las empresas, códigos de ruta (ej. 7501), origen y destino desde Wikipedia para alimentar la base de datos.</p>
+                            <button onclick="app.runOptimization('wiki-sync')" class="w-full bg-indigo-50 text-indigo-700 font-bold py-2 rounded hover:bg-indigo-100 transition">Iniciar Proceso</button>
+                        </div>
                     </div>
                 </div>
 

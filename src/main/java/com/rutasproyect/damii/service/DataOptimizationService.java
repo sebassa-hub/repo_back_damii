@@ -157,8 +157,8 @@ public class DataOptimizationService {
         // Ordenamos los stops
         routeStops.sort(Comparator.comparing(RouteStop::getStopOrder, Comparator.nullsLast(Comparator.naturalOrder())));
 
-        // Tomamos máximo 90 puntos para no exceder los límites de URL de OSRM
-        int limit = Math.min(routeStops.size(), 90);
+        // Tomamos máximo 45 puntos para no exceder los límites de tiempo de OSRM gratuito
+        int limit = Math.min(routeStops.size(), 45);
         
         StringBuilder coordinatesUrl = new StringBuilder();
         for (int i = 0; i < limit; i++) {
@@ -307,7 +307,7 @@ public class DataOptimizationService {
         for (TransportRoute route : routes) {
             try {
                 matchRouteGeometry(route.getId());
-                Thread.sleep(200); // Pequeña pausa OSRM
+                Thread.sleep(1500); // Mayor pausa para no saturar OSRM público
             } catch(Exception e) {
                 // Ignore
             }
