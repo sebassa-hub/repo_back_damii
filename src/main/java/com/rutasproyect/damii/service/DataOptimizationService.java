@@ -35,6 +35,10 @@ public class DataOptimizationService {
     // Tracker de progreso
     private final Map<String, ProgressInfo> progressMap = new ConcurrentHashMap<>();
 
+    public Map<String, ProgressInfo> getProgressMap() {
+        return progressMap;
+    }
+
     public ProgressInfo getProgress(String taskId) {
         return progressMap.getOrDefault(taskId, new ProgressInfo("NOT_STARTED", 0, 0, "No process running"));
     }
