@@ -50,8 +50,8 @@ public class OpenStreetMapSyncService {
         // Limpiar paraderos viejos para esta ruta específica antes de re-sincronizar
         routeStopRepository.findByRouteIdWithStops(routeId).forEach(routeStopRepository::delete);
 
-        // Query Overpass API: Búsqueda estricta sobre relaciones de tipo bus para este REF (ej. 8611) o NAME
-        String queryByRef = "[out:json];relation[\"route\"=\"bus\"][\"ref\"=\"" + code + "\"];out geom;";
+        // Query Overpass API: Búsqueda estricta sobre relaciones de bus, con Geocerca (Bounding Box) en Lima/Callao
+        String queryByRef = "[out:json][bbox:-12.5,-77.3,-11.5,-76.5];relation[\"route\"=\"bus\"][\"ref\"=\"" + code + "\"];out geom;";
         String urlByRef = "https://overpass-api.de/api/interpreter?data=" + queryByRef;
 
         try {
@@ -64,7 +64,7 @@ public class OpenStreetMapSyncService {
             if (!elements.isArray() || elements.size() == 0) {
                 String nameQuery = route.getName();
                 if (nameQuery != null && !nameQuery.isEmpty()) {
-                    String queryByName = "[out:json];relation[\"route\"=\"bus\"][\"name\"~\"" + nameQuery + "\",i];out geom;";
+                    String queryByName = "[out:json][bbox:-12.5,-77.3,-11.5,-76.5];relation[\"route\"=\"bus\"][\"name\"~\"" + nameQuery + "\",i];out geom;";
                     String urlByName = "https://overpass-api.de/api/interpreter?data=" + queryByName;
                     responseStr = restTemplate.getForObject(urlByName, String.class);
                     root = mapper.readTree(responseStr);

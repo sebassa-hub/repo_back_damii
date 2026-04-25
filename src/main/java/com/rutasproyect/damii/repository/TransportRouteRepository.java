@@ -22,4 +22,6 @@ public interface TransportRouteRepository extends JpaRepository<TransportRoute, 
     org.springframework.data.domain.Page<TransportRoute> findAllRoutesWithoutStops(org.springframework.data.domain.Pageable pageable);
 
     List<TransportRoute> findByIsVerifiedTrue();
+
+    org.springframework.data.domain.Page<TransportRoute> findByNameContainingIgnoreCaseOrRouteRefContainingIgnoreCase(String name, String ref, org.springframework.data.domain.Pageable pageable);
 }

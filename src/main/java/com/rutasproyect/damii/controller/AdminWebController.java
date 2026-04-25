@@ -55,10 +55,15 @@ public class AdminWebController {
     @GetMapping("/routes")
     public ResponseEntity<Page<TransportRoute>> getAllRoutes(
             @RequestParam(required = false) String filter,
+            @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size) {
 
         Pageable pageable = PageRequest.of(page, size);
+
+        if (search != null && !search.trim().isEmpty()) {
+            return ResponseEntity.ok(routeRepository.findByNameContainingIgnoreCaseOrRouteRefContainingIgnoreCase(search, search, pageable));
+        }
 
         if ("with_stops".equalsIgnoreCase(filter)) {
             return ResponseEntity.ok(routeRepository.findAllRoutesWithStops(pageable));

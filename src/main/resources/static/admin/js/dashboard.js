@@ -100,11 +100,30 @@ const app = {
     },
 
     currentRouteFilter: 'all',
+    currentSearchQuery: '',
     currentRoutePage: 0,
     totalRoutePages: 0,
+    searchTimeout: null,
+
+    onSearchInput() {
+        if(this.searchTimeout) clearTimeout(this.searchTimeout);
+        this.searchTimeout = setTimeout(() => {
+            this.searchRoutes();
+        }, 400); // 400ms debounce
+    },
+
+    searchRoutes() {
+        this.currentSearchQuery = document.getElementById('route-search-input').value.trim();
+        this.currentRoutePage = 0;
+        this.loadRoutes();
+    },
 
     setRouteFilter(filterType) {
         this.currentRouteFilter = filterType;
+        this.currentSearchQuery = ''; // Reset search on filter change
+        const searchInput = document.getElementById('route-search-input');
+        if(searchInput) searchInput.value = '';
+        
         this.currentRoutePage = 0; // reset to first page on filter change
         
         // Update UI buttons
@@ -137,18 +156,24 @@ const app = {
 
     async loadRoutes() {
         let endpoint = `/api/v1/admin/routes?page=${this.currentRoutePage}&size=12`;
-        if (this.currentRouteFilter !== 'all') {
+        if (this.currentSearchQuery) {
+            endpoint += `&search=${encodeURIComponent(this.currentSearchQuery)}`;
+        } else if (this.currentRouteFilter !== 'all') {
             endpoint += `&filter=${this.currentRouteFilter}`;
         }
         
         const responseData = await this.fetchApi(endpoint);
         const routes = responseData.content || [];
-        this.totalRoutePages = responseData.totalPages || 1;
+        
+        // Manejar estructura de paginación de Spring Boot (top-level vs nested 'page')
+        const pageInfo = responseData.page || responseData;
+        this.totalRoutePages = pageInfo.totalPages || 1;
+        const totalElements = pageInfo.totalElements ?? routes.length ?? 0;
 
         // UI Updates for pagination
         document.getElementById('page-current').textContent = (this.currentRoutePage + 1);
         document.getElementById('page-total').textContent = this.totalRoutePages;
-        document.getElementById('item-total').textContent = responseData.totalElements || 0;
+        document.getElementById('item-total').textContent = totalElements;
         document.getElementById('btn-prev-page').disabled = this.currentRoutePage === 0;
         document.getElementById('btn-next-page').disabled = this.currentRoutePage >= this.totalRoutePages - 1;
 
@@ -359,6 +384,7 @@ const app = {
             }
 
             container.innerHTML = '';
+            let htmlContent = '';
             stops.forEach(routeStop => {
                 const stop = routeStop.stop;
                 if(!stop) return;
@@ -376,7 +402,7 @@ const app = {
                     `<option value="IDA" selected>IDA</option><option value="VUELTA">VUELTA</option>`;
 
                 // Construct embedded editing UI
-                container.innerHTML += `
+                htmlContent += `
                     <li class="py-4 grid gap-2 bg-white border-b border-gray-100 last:border-0 pl-1">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center space-x-2 flex-1">
@@ -401,6 +427,7 @@ const app = {
                     </li>
                 `;
             });
+            container.innerHTML = htmlContent;
         } catch(e) {
             container.innerHTML = '<li class="py-4 flex text-center text-sm text-red-500">Error al cargar paraderos.</li>';
         }
