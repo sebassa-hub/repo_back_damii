@@ -17,11 +17,14 @@ public class AdminOptimizationController {
 
     private final DataOptimizationService optimizationService;
     private final com.rutasproyect.damii.service.WikipediaScraperService scraperService;
+    private final com.rutasproyect.damii.service.OpenStreetMapSyncService osmSyncService;
 
     public AdminOptimizationController(DataOptimizationService optimizationService, 
-                                       com.rutasproyect.damii.service.WikipediaScraperService scraperService) {
+                                       com.rutasproyect.damii.service.WikipediaScraperService scraperService,
+                                       com.rutasproyect.damii.service.OpenStreetMapSyncService osmSyncService) {
         this.optimizationService = optimizationService;
         this.scraperService = scraperService;
+        this.osmSyncService = osmSyncService;
     }
 
     @PostMapping("/stops/names")
@@ -64,6 +67,30 @@ public class AdminOptimizationController {
     public ResponseEntity<?> runWikiSync() {
         scraperService.scrapeAndSyncRoutes();
         return ResponseEntity.ok(Map.of("message", "Proceso global de sincronización de Wikipedia iniciado"));
+    }
+
+    @PostMapping("/run-all/osm-sync")
+    public ResponseEntity<?> runGlobalOsmSync() {
+        osmSyncService.runGlobalOsmSync();
+        return ResponseEntity.ok(Map.of("message", "Escaneo masivo de rutas verdaderas en OSM iniciado"));
+    }
+
+    @PostMapping("/run-all/trace-routes")
+    public ResponseEntity<?> runGlobalTraceRoutes() {
+        optimizationService.runGlobalRouteTracing();
+        return ResponseEntity.ok(Map.of("message", "Proceso de auto-trazado de contingencia iniciado"));
+    }
+
+    @PostMapping("/purge-osm-data")
+    public ResponseEntity<?> purgeOsmData() {
+        optimizationService.cleanCorruptedOsmData();
+        return ResponseEntity.ok(Map.of("message", "Se eliminaron todas las rutas, formas y paraderos con éxito."));
+    }
+
+    @PostMapping("/routes/{routeId}/sync-osm-stops")
+    public ResponseEntity<?> syncOsmStops(@PathVariable Integer routeId) {
+        osmSyncService.syncStopsFromOverpass(routeId);
+        return ResponseEntity.ok(Map.of("message", "Sincronización de paraderos desde Overpass completada. Revisa la base de datos para validar si la data era precisa."));
     }
 
     @GetMapping("/status/{taskId}")

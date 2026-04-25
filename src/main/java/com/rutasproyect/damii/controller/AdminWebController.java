@@ -23,12 +23,6 @@ import com.rutasproyect.damii.model.User;
 import com.rutasproyect.damii.repository.RouteRatingRepository;
 import com.rutasproyect.damii.repository.RouteStopRepository;
 import com.rutasproyect.damii.repository.TransportRouteRepository;
-import com.rutasproyect.damii.model.UserComment;
-import com.rutasproyect.damii.model.RouteComment;
-import com.rutasproyect.damii.model.Report;
-import com.rutasproyect.damii.repository.UserCommentRepository;
-import com.rutasproyect.damii.repository.RouteCommentRepository;
-import com.rutasproyect.damii.repository.ReportRepository;
 import com.rutasproyect.damii.repository.UserRepository;
 
 @RestController
@@ -40,26 +34,17 @@ public class AdminWebController {
     private final RouteRatingRepository ratingRepository;
     private final RouteStopRepository routeStopRepository;
     private final com.rutasproyect.damii.repository.StopRepository stopRepository;
-    private final UserCommentRepository userCommentRepository;
-    private final RouteCommentRepository routeCommentRepository;
-    private final ReportRepository reportRepository;
 
-    public AdminWebController(UserRepository userRepository, 
-                              TransportRouteRepository routeRepository, 
-                              RouteRatingRepository ratingRepository,
-                              RouteStopRepository routeStopRepository,
-                              com.rutasproyect.damii.repository.StopRepository stopRepository,
-                              UserCommentRepository userCommentRepository,
-                              RouteCommentRepository routeCommentRepository,
-                              ReportRepository reportRepository) {
+    public AdminWebController(UserRepository userRepository,
+            TransportRouteRepository routeRepository,
+            RouteRatingRepository ratingRepository,
+            RouteStopRepository routeStopRepository,
+            com.rutasproyect.damii.repository.StopRepository stopRepository) {
         this.userRepository = userRepository;
         this.routeRepository = routeRepository;
         this.ratingRepository = ratingRepository;
         this.routeStopRepository = routeStopRepository;
         this.stopRepository = stopRepository;
-        this.userCommentRepository = userCommentRepository;
-        this.routeCommentRepository = routeCommentRepository;
-        this.reportRepository = reportRepository;
     }
 
     @GetMapping("/users")
@@ -72,9 +57,9 @@ public class AdminWebController {
             @RequestParam(required = false) String filter,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size) {
-        
+
         Pageable pageable = PageRequest.of(page, size);
-        
+
         if ("with_stops".equalsIgnoreCase(filter)) {
             return ResponseEntity.ok(routeRepository.findAllRoutesWithStops(pageable));
         } else if ("without_stops".equalsIgnoreCase(filter)) {
@@ -99,7 +84,8 @@ public class AdminWebController {
     @DeleteMapping("/routes/{id}")
     @CacheEvict(value = "mobileRoutesSearch", allEntries = true)
     public ResponseEntity<Void> deleteRoute(@PathVariable Integer id) {
-        if (!routeRepository.existsById(id)) return ResponseEntity.notFound().build();
+        if (!routeRepository.existsById(id))
+            return ResponseEntity.notFound().build();
         routeRepository.deleteById(id);
         return ResponseEntity.noContent().build();
     }
@@ -111,7 +97,8 @@ public class AdminWebController {
 
     @PutMapping("/stops/{id}")
     @CacheEvict(value = "mobileRoutesSearch", allEntries = true)
-    public ResponseEntity<com.rutasproyect.damii.model.Stop> updateStop(@PathVariable Integer id, @RequestBody com.rutasproyect.damii.model.Stop data) {
+    public ResponseEntity<com.rutasproyect.damii.model.Stop> updateStop(@PathVariable Integer id,
+            @RequestBody com.rutasproyect.damii.model.Stop data) {
         return stopRepository.findById(id).map(existing -> {
             existing.setName(data.getName());
             existing.setLatitude(data.getLatitude());
@@ -123,7 +110,8 @@ public class AdminWebController {
     @DeleteMapping("/route-stops/{id}")
     @CacheEvict(value = "mobileRoutesSearch", allEntries = true)
     public ResponseEntity<Void> deleteRouteStop(@PathVariable Integer id) {
-        if (!routeStopRepository.existsById(id)) return ResponseEntity.notFound().build();
+        if (!routeStopRepository.existsById(id))
+            return ResponseEntity.notFound().build();
         routeStopRepository.deleteById(id);
         return ResponseEntity.noContent().build();
     }
@@ -172,18 +160,4 @@ public class AdminWebController {
         return ResponseEntity.ok(ratingRepository.findAll());
     }
 
-    @GetMapping("/comments/company")
-    public ResponseEntity<List<UserComment>> getCompanyComments() {
-        return ResponseEntity.ok(userCommentRepository.findAll());
-    }
-
-    @GetMapping("/comments/route")
-    public ResponseEntity<List<RouteComment>> getRouteComments() {
-        return ResponseEntity.ok(routeCommentRepository.findAll());
-    }
-
-    @GetMapping("/reports")
-    public ResponseEntity<List<Report>> getReports() {
-        return ResponseEntity.ok(reportRepository.findAll());
-    }
 }

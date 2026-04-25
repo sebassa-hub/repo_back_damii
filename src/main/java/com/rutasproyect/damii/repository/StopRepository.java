@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
 import java.util.List;
 
 @Repository
@@ -23,4 +24,5 @@ public interface StopRepository extends JpaRepository<Stop, Integer> {
             @Param("userLng") Double userLng,
             @Param("radiusMeters") Double radiusMeters);
 
+    Optional<Stop> findByLatitudeAndLongitude(Double latitude, Double longitude);
 }

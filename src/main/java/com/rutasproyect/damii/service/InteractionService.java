@@ -5,37 +5,27 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.rutasproyect.damii.model.FavoriteRoute;
-import com.rutasproyect.damii.model.RouteComment;
 import com.rutasproyect.damii.model.RouteRating;
 import com.rutasproyect.damii.model.TransportRoute;
 import com.rutasproyect.damii.model.User;
-import com.rutasproyect.damii.model.UserComment;
 import com.rutasproyect.damii.repository.FavoriteRouteRepository;
-import com.rutasproyect.damii.repository.RouteCommentRepository;
 import com.rutasproyect.damii.repository.RouteRatingRepository;
 import com.rutasproyect.damii.repository.TransportRouteRepository;
-import com.rutasproyect.damii.repository.UserCommentRepository;
 import com.rutasproyect.damii.repository.UserRepository;
 
 @Service
 public class InteractionService {
 
     private final FavoriteRouteRepository favoriteRouteRepository;
-    private final RouteCommentRepository routeCommentRepository;
-    private final UserCommentRepository userCommentRepository;
     private final RouteRatingRepository routeRatingRepository;
     private final TransportRouteRepository transportRouteRepository;
     private final UserRepository userRepository;
 
     public InteractionService(FavoriteRouteRepository favoriteRouteRepository,
-                              RouteCommentRepository routeCommentRepository,
-                              UserCommentRepository userCommentRepository,
                               RouteRatingRepository routeRatingRepository,
                               TransportRouteRepository transportRouteRepository,
                               UserRepository userRepository) {
         this.favoriteRouteRepository = favoriteRouteRepository;
-        this.routeCommentRepository = routeCommentRepository;
-        this.userCommentRepository = userCommentRepository;
         this.routeRatingRepository = routeRatingRepository;
         this.transportRouteRepository = transportRouteRepository;
         this.userRepository = userRepository;
@@ -72,30 +62,8 @@ public class InteractionService {
         return favoriteRouteRepository.findByUserId(user.getId());
     }
 
-    // --- USER/COMPANY COMMENTS ---
-    public UserComment addCompanyComment(String userEmail, String network, String commentText) {
-        User user = getUserByEmail(userEmail);
-        UserComment comment = new UserComment();
-        comment.setUser(user);
-        comment.setNetwork(network);
-        comment.setComment(commentText);
-        return userCommentRepository.save(comment);
-    }
-
-    // --- ROUTE COMMENTS ---
-    public RouteComment addRouteComment(String userEmail, Integer routeId, String commentText) {
-        User user = getUserByEmail(userEmail);
-        TransportRoute route = getRouteById(routeId);
-        
-        RouteComment comment = new RouteComment();
-        comment.setUser(user);
-        comment.setRoute(route);
-        comment.setComment(commentText);
-        return routeCommentRepository.save(comment);
-    }
-
-    // --- ROUTE RATINGS ---
-    public RouteRating addRouteRating(String userEmail, Integer routeId, Integer ratingScore) {
+    // --- ROUTE RATINGS / COMMENTS ---
+    public RouteRating addRouteRating(String userEmail, Integer routeId, Integer ratingScore, String commentText) {
         User user = getUserByEmail(userEmail);
         TransportRoute route = getRouteById(routeId);
         
@@ -103,6 +71,7 @@ public class InteractionService {
         rating.setUser(user);
         rating.setRoute(route);
         rating.setRating(ratingScore);
+        rating.setComment(commentText);
         return routeRatingRepository.save(rating);
     }
 }

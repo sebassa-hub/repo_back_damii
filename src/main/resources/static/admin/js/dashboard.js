@@ -210,54 +210,16 @@ const app = {
             let html = '';
             if (tab === 'ratings') {
                 const data = await this.fetchApi('/api/v1/admin/ratings');
-                html += `<thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Ruta</th><th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Usuario</th><th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Puntos</th><th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Fecha</th></tr></thead><tbody class="bg-white divide-y divide-gray-200">`;
+                html += `<thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Ruta / Empresa</th><th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Usuario</th><th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Rating</th><th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Comentario</th><th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Fecha</th></tr></thead><tbody class="bg-white divide-y divide-gray-200">`;
                 data.forEach(item => {
                     const userName = item.user ? item.user.name : 'Anónimo';
-                    const routeName = item.route ? item.route.name : 'Desconocida';
+                    const routeInfo = item.route ? `Ruta: ${item.route.routeRef || 'ND'} - Empresa: ${item.route.network || 'Desconocida'}` : 'Desconocida';
+                    const comment = item.comment ? item.comment : '<em class="text-gray-400">Sin comentario</em>';
                     html += `<tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 text-sm font-medium text-gray-900">${routeName}</td>
+                        <td class="px-6 py-4 text-sm font-medium text-gray-900">${routeInfo}</td>
                         <td class="px-6 py-4 text-sm text-gray-500">${userName}</td>
-                        <td class="px-6 py-4 text-sm text-yellow-500 font-bold">${item.rating} / 5</td>
-                        <td class="px-6 py-4 text-sm text-gray-500">${new Date(item.createdAt).toLocaleDateString()}</td>
-                    </tr>`;
-                });
-                html += `</tbody>`;
-            } else if (tab === 'route-comments') {
-                const data = await this.fetchApi('/api/v1/admin/comments/route');
-                html += `<thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Ruta</th><th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Usuario</th><th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Comentario</th><th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Fecha</th></tr></thead><tbody class="bg-white divide-y divide-gray-200">`;
-                data.forEach(item => {
-                    const userName = item.user ? item.user.name : 'Anónimo';
-                    const routeName = item.route ? item.route.name : 'Desconocida';
-                    html += `<tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 text-sm font-medium text-gray-900">${routeName}</td>
-                        <td class="px-6 py-4 text-sm text-gray-500">${userName}</td>
-                        <td class="px-6 py-4 text-sm text-gray-700">${item.comment}</td>
-                        <td class="px-6 py-4 text-sm text-gray-500">${new Date(item.createdAt).toLocaleDateString()}</td>
-                    </tr>`;
-                });
-                html += `</tbody>`;
-            } else if (tab === 'company-comments') {
-                const data = await this.fetchApi('/api/v1/admin/comments/company');
-                html += `<thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Empresa (Network)</th><th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Usuario</th><th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Comentario</th><th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Fecha</th></tr></thead><tbody class="bg-white divide-y divide-gray-200">`;
-                data.forEach(item => {
-                    const userName = item.user ? item.user.name : 'Anónimo';
-                    html += `<tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 text-sm font-medium text-gray-900">${item.network}</td>
-                        <td class="px-6 py-4 text-sm text-gray-500">${userName}</td>
-                        <td class="px-6 py-4 text-sm text-gray-700">${item.comment}</td>
-                        <td class="px-6 py-4 text-sm text-gray-500">${new Date(item.createdAt).toLocaleDateString()}</td>
-                    </tr>`;
-                });
-                html += `</tbody>`;
-            } else if (tab === 'reports') {
-                const data = await this.fetchApi('/api/v1/admin/reports');
-                html += `<thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Tipo</th><th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Ubicación</th><th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Usuario</th><th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Fecha</th></tr></thead><tbody class="bg-white divide-y divide-gray-200">`;
-                data.forEach(item => {
-                    const userName = item.user ? item.user.name : 'Anónimo';
-                    html += `<tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 text-sm font-bold text-red-600">${item.reportType}</td>
-                        <td class="px-6 py-4 text-sm text-gray-500">Lat: ${item.latitude}, Lng: ${item.longitude}</td>
-                        <td class="px-6 py-4 text-sm text-gray-500">${userName}</td>
+                        <td class="px-6 py-4 text-sm text-yellow-500 font-bold">${item.rating} / 5 <i class="fas fa-star"></i></td>
+                        <td class="px-6 py-4 text-sm text-gray-700 italic max-w-xs truncate" title="${comment}">${comment}</td>
                         <td class="px-6 py-4 text-sm text-gray-500">${new Date(item.createdAt).toLocaleDateString()}</td>
                     </tr>`;
                 });

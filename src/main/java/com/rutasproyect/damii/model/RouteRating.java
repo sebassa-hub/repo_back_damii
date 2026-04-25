@@ -37,8 +37,12 @@ public class RouteRating {
     private TransportRoute route;
 
     @Column(nullable = false)
+    @jakarta.validation.constraints.Min(1)
+    @jakarta.validation.constraints.Max(5)
     private Integer rating;
 
+    @Column(columnDefinition = "TEXT")
+    private String comment;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();

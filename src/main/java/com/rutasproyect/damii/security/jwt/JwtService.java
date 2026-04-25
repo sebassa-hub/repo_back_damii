@@ -41,8 +41,7 @@ public class JwtService {
                 .setClaims(extraClaims)
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 24)) // 24 minutos para prueba (ideal
-                                                                                      // 24 horas = 1000 * 60 * 60 * 24)
+                .setExpiration(new Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 30)) // 30 dias de vida util para la sesion
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
     }

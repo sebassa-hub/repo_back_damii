@@ -175,6 +175,20 @@
                             <p class="text-sm text-gray-500 mb-4 flex-1">Extrae automáticamente todas las empresas, códigos de ruta (ej. 7501), origen y destino desde Wikipedia para alimentar la base de datos.</p>
                             <button onclick="app.runOptimization('wiki-sync')" class="w-full bg-indigo-50 text-indigo-700 font-bold py-2 rounded hover:bg-indigo-100 transition">Iniciar Proceso</button>
                         </div>
+                        <!-- OSM Sync (Verdad Absoluta) -->
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col">
+                            <div class="text-indigo-600 mb-4"><i class="fas fa-satellite-dish text-3xl"></i></div>
+                            <h3 class="text-lg font-bold mb-2">Sincronizar OpenStreetMap</h3>
+                            <p class="text-sm text-gray-500 mb-4 flex-1">Busca el recorrido exacto y paraderos reales de las rutas en el satélite mundial (Overpass) para asegurar 100% de precisión.</p>
+                            <button onclick="app.runOptimization('osm-sync')" class="w-full bg-green-50 text-green-700 font-bold py-2 rounded hover:bg-green-100 transition">Sincronizar Satélite</button>
+                        </div>
+                        <!-- Trace Routes (Fallback) -->
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col">
+                            <div class="text-indigo-600 mb-4"><i class="fas fa-route text-3xl"></i></div>
+                            <h3 class="text-lg font-bold mb-2">Trazar Origen-Destino (Fallback)</h3>
+                            <p class="text-sm text-gray-500 mb-4 flex-1">Si una ruta no existe en OSM, usa el texto de "Ate - Callao" para dibujar un camino estimado en el mapa automáticamente.</p>
+                            <button onclick="app.runOptimization('trace-routes')" class="w-full bg-yellow-50 text-yellow-700 font-bold py-2 rounded hover:bg-yellow-100 transition">Generar Caminos</button>
+                        </div>
                     </div>
                 </div>
 

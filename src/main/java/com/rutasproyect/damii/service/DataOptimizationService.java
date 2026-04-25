@@ -55,6 +55,17 @@ public class DataOptimizationService {
     }
 
     /**
+     * Limpia la base de datos de paraderos, formas de ruta (Map-Matching) y relaciones,
+     * útil para reiniciar la importación con datos frescos o purgar errores previos de OSM.
+     */
+    @Transactional
+    public void cleanCorruptedOsmData() {
+        routeStopRepository.deleteAllInBatch();
+        routeShapeRepository.deleteAllInBatch();
+        stopRepository.deleteAllInBatch();
+    }
+
+    /**
      * 1. Reverse Geocoding para limpiar nombres de paraderos.
      */
     @Transactional
@@ -211,6 +222,82 @@ public class DataOptimizationService {
         }
     }
 
+    /**
+     * 4. Auto-Trazado de Ruta de Contingencia usando Nominatim + OSRM Routing Simple
+     */
+    @Transactional
+    public void traceRouteFromOriginDestination(Integer routeId) {
+        TransportRoute route = transportRouteRepository.findById(routeId).orElseThrow();
+        
+        // Si ya tiene geometría (posiblemente de Overpass o dibujada manualmente), la respetamos
+        if (routeShapeRepository.countByRouteId(routeId) > 0) return;
+
+        String originText = route.getOrigin();
+        String destText = route.getDestination();
+
+        if (originText == null || destText == null || originText.isEmpty() || destText.isEmpty()) return;
+
+        try {
+            // Geocode Origin
+            double[] originCoords = geocodePlace(originText + ", Lima, Peru");
+            // Geocode Destination
+            double[] destCoords = geocodePlace(destText + ", Lima, Peru");
+
+            if (originCoords == null || destCoords == null) return;
+
+            // Pedir ruta óptima manejando a OSRM
+            String url = String.format("http://router.project-osrm.org/route/v1/driving/%s,%s;%s,%s?geometries=geojson&overview=full",
+                    originCoords[1], originCoords[0], // lon, lat
+                    destCoords[1], destCoords[0]);    // lon, lat
+
+            ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                Map<String, Object> body = response.getBody();
+                List<Map<String, Object>> routesResp = (List<Map<String, Object>>) body.get("routes");
+
+                if (routesResp != null && !routesResp.isEmpty()) {
+                    Map<String, Object> geometry = (Map<String, Object>) routesResp.get(0).get("geometry");
+                    List<List<Double>> coordinates = (List<List<Double>>) geometry.get("coordinates");
+
+                    List<RouteShape> newShapes = new ArrayList<>();
+                    int order = 1;
+                    for (List<Double> coord : coordinates) {
+                        RouteShape shape = new RouteShape();
+                        shape.setRoute(route);
+                        shape.setLongitude(coord.get(0));
+                        shape.setLatitude(coord.get(1));
+                        shape.setSequenceOrder(order++);
+                        newShapes.add(shape);
+                    }
+                    routeShapeRepository.saveAll(newShapes);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error procesando Auto-Trazado Fallback para ruta " + routeId + ": " + e.getMessage());
+        }
+    }
+
+    private double[] geocodePlace(String query) {
+        try {
+            String url = "https://nominatim.openstreetmap.org/search?q=" + query.replace(" ", "+") + "&format=json&limit=1";
+            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+            headers.set("User-Agent", "DamiiTransitApp/1.0");
+            org.springframework.http.HttpEntity<String> entity = new org.springframework.http.HttpEntity<>(headers);
+            ResponseEntity<List> response = restTemplate.exchange(url, org.springframework.http.HttpMethod.GET, entity, List.class);
+            
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null && !response.getBody().isEmpty()) {
+                Map<String, Object> firstResult = (Map<String, Object>) response.getBody().get(0);
+                double lat = Double.parseDouble(firstResult.get("lat").toString());
+                double lon = Double.parseDouble(firstResult.get("lon").toString());
+                return new double[]{lat, lon};
+            }
+            Thread.sleep(1500);
+        } catch(Exception e) {
+            // ignore
+        }
+        return null;
+    }
+
     // --- Helpers ---
     
     // Fórmula Haversine para calcular distancia entre dos coordenadas en metros
@@ -320,5 +407,29 @@ public class DataOptimizationService {
         }
         
         progressMap.put(taskId, new ProgressInfo("COMPLETED", count, routes.size(), "Alineación de rutas finalizada"));
+    }
+
+    @Async
+    public void runGlobalRouteTracing() {
+        String taskId = "global_trace_routes";
+        List<TransportRoute> routes = transportRouteRepository.findAll();
+        progressMap.put(taskId, new ProgressInfo("RUNNING", 0, routes.size(), "Iniciando auto-trazado (Fallback) para rutas vacías..."));
+
+        int count = 0;
+        for (TransportRoute route : routes) {
+            try {
+                // Solo trazar si no hay forma existente
+                if(routeShapeRepository.countByRouteId(route.getId()) == 0) {
+                    traceRouteFromOriginDestination(route.getId());
+                    Thread.sleep(1500); // Pausa obligatoria para no banear la IP de Nominatim / OSRM
+                }
+            } catch(Exception e) {
+                // Ignore
+            }
+            count++;
+            progressMap.put(taskId, new ProgressInfo("RUNNING", count, routes.size(), "Trazando caminos estimados..."));
+        }
+        
+        progressMap.put(taskId, new ProgressInfo("COMPLETED", count, routes.size(), "Auto-trazado de contingencia finalizado"));
     }
 }
