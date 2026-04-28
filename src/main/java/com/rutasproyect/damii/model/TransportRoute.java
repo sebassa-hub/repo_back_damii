@@ -3,7 +3,9 @@ package com.rutasproyect.damii.model;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -38,4 +40,7 @@ public class TransportRoute {
     private String destination;
 
     private String status = "ACTIVA";
+
+    @OneToMany(mappedBy = "route")
+    private List<RouteStop> routeStops;
 }
