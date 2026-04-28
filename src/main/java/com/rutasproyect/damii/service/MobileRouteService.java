@@ -8,9 +8,12 @@ import com.rutasproyect.damii.dto.RouteCoordinateDTO;
 import com.rutasproyect.damii.dto.RouteDetailDTO;
 import com.rutasproyect.damii.dto.RouteSummaryDTO;
 import com.rutasproyect.damii.model.RouteShape;
+import com.rutasproyect.damii.model.RouteStop;
 import com.rutasproyect.damii.model.TransportRoute;
 import com.rutasproyect.damii.repository.RouteShapeRepository;
+import com.rutasproyect.damii.repository.RouteStopRepository;
 import com.rutasproyect.damii.repository.TransportRouteRepository;
+import com.rutasproyect.damii.service.MobileRouteService.RouteStopDTO;
 
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,40 +21,71 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true) // Optimiza las consultas al no bloquear la base de datos
 public class MobileRouteService {
 
-    private final TransportRouteRepository routeRepository;
-    private final RouteShapeRepository shapeRepository;
+        private final TransportRouteRepository routeRepository;
+        private final RouteShapeRepository shapeRepository;
+        private final RouteStopRepository routeStopRepository;
 
-    public MobileRouteService(TransportRouteRepository routeRepository,
-            RouteShapeRepository shapeRepository) {
-        this.routeRepository = routeRepository;
-        this.shapeRepository = shapeRepository;
-    }
+        public MobileRouteService(TransportRouteRepository routeRepository,
+                        RouteShapeRepository shapeRepository,
+                        RouteStopRepository routeStopRepository) {
+                this.routeRepository = routeRepository;
+                this.shapeRepository = shapeRepository;
+                this.routeStopRepository = routeStopRepository;
+        }
 
-    // 1. Buscador rápido para la App (Filtrado para enviar SOLO rutas con paraderos)
-    @org.springframework.cache.annotation.Cacheable("mobileRoutesSearch")
-    public List<RouteSummaryDTO> searchRoutes(String query) {
-        List<TransportRoute> routes = routeRepository
-                .searchActiveRoutesWithStops(query, query);
+        // 1. Buscador rápido para la App (Filtrado para enviar SOLO rutas con
+        // paraderos)
+        @org.springframework.cache.annotation.Cacheable("mobileRoutesSearch")
+        public List<RouteSummaryDTO> searchRoutes(String query) {
+                List<TransportRoute> routes = routeRepository
+                                .searchActiveRoutesWithStops(query, query);
 
-        return routes.stream()
-                .map(r -> new RouteSummaryDTO(
-                        r.getId(), r.getName(), r.getRouteRef(),
-                        r.getNetwork(), r.getIsVerified(), r.getRiskLevel()))
-                .toList();
-    }
+                return routes.stream()
+                                .map(r -> new RouteSummaryDTO(
+                                                r.getId(), r.getName(), r.getRouteRef(),
+                                                r.getNetwork(), r.getIsVerified(), r.getRiskLevel()))
+                                .toList();
+        }
 
-    // 2. Obtener los puntos para dibujar la línea en MapKit
-    public RouteDetailDTO getRouteDetailsForMap(Integer routeId) {
-        TransportRoute route = routeRepository.findById(routeId)
-                .orElseThrow(() -> new RuntimeException("Ruta no encontrada"));
+        // 2. Obtener los puntos para dibujar la línea en MapKit
+        public RouteDetailDTO getRouteDetailsForMap(Integer routeId) {
+                TransportRoute route = routeRepository.findById(routeId)
+                                .orElseThrow(() -> new RuntimeException("Ruta no encontrada"));
 
-        // Aquí usamos el método ordenado que creamos en el Repository
-        List<RouteShape> shapes = shapeRepository.findByRouteIdOrderBySequenceOrderAsc(routeId);
+                // Aquí usamos el método ordenado que creamos en el Repository
+                List<RouteShape> shapes = shapeRepository.findByRouteIdOrderBySequenceOrderAsc(routeId);
 
-        List<RouteCoordinateDTO> coordinates = shapes.stream()
-                .map(s -> new RouteCoordinateDTO(s.getLatitude(), s.getLongitude()))
-                .toList();
+                List<RouteCoordinateDTO> coordinates = shapes.stream()
+                                .map(s -> new RouteCoordinateDTO(s.getLatitude(), s.getLongitude()))
+                                .toList();
 
-        return new RouteDetailDTO(route.getId(), route.getName(), route.getRiskLevel(), coordinates);
-    }
+                return new RouteDetailDTO(route.getId(), route.getName(), route.getRiskLevel(), coordinates);
+        }
+
+        // DTO Ligero para enviar solo lo necesario del paradero
+        public record RouteStopDTO(
+                        Integer id, String name, Double latitude, Double longitude, Integer stopOrder) {
+        }
+
+        // Nuevo método en el Service
+        public List<RouteStopDTO> getRouteStops(Integer routeId) {
+
+                // Usamos TU consulta que trae todo en 1 solo paso y ya ordenado
+                List<RouteStop> routeStops = routeStopRepository.findByRouteIdWithStops(routeId);
+
+                // Si la lista está vacía, o la ruta no existe o no tiene paraderos
+                if (routeStops.isEmpty()) {
+                        throw new RuntimeException("Ruta no encontrada o sin paraderos asignados");
+                }
+
+                // Mapeamos a DTO para enviar un JSON limpio al iPhone
+                return routeStops.stream()
+                                .map(rs -> new RouteStopDTO(
+                                                rs.getStop().getId(),
+                                                rs.getStop().getName(),
+                                                rs.getStop().getLatitude(),
+                                                rs.getStop().getLongitude(),
+                                                rs.getStopOrder()))
+                                .toList();
+        }
 }

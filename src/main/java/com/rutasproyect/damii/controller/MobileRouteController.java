@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import com.rutasproyect.damii.dto.RouteDetailDTO;
 import com.rutasproyect.damii.dto.RouteSummaryDTO;
 import com.rutasproyect.damii.service.MobileRouteService;
+import com.rutasproyect.damii.service.MobileRouteService.RouteStopDTO;
 
 import java.util.List;
 
@@ -30,6 +31,12 @@ public class MobileRouteController {
     public ResponseEntity<RouteDetailDTO> getRouteForMap(@PathVariable Integer id) {
         return ResponseEntity.ok(routeService.getRouteDetailsForMap(id));
     }
+
+    @GetMapping("/routes/{id}/stops")
+    public ResponseEntity<List<RouteStopDTO>> getStops(@PathVariable Integer id) {
+        return ResponseEntity.ok(routeService.getRouteStops(id));
+    }
+
     /*
      * // GET /api/v1/mobile/radar?lat=-12.04&lng=-77.02&radius=500
      * 
