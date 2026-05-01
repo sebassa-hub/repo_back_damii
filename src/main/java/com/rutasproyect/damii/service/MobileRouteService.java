@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.rutasproyect.damii.dto.RouteBasicInfoDTO;
 import com.rutasproyect.damii.dto.RouteCoordinateDTO;
 import com.rutasproyect.damii.dto.RouteDetailDTO;
 import com.rutasproyect.damii.dto.RouteSummaryDTO;
@@ -47,7 +48,42 @@ public class MobileRouteService {
                                 .toList();
         }
 
-        // 2. Obtener los puntos para dibujar la línea en MapKit
+        // 2. Obtener rutas por tipo (Autobus, Corredor, Metro) o Todas
+        @org.springframework.cache.annotation.Cacheable("mobileRoutesNetwork")
+        public List<RouteSummaryDTO> getRoutesByNetwork(String network) {
+                List<TransportRoute> routes;
+                if (network == null || network.trim().isEmpty() || network.equalsIgnoreCase("Todos")) {
+                        routes = routeRepository.findAllActiveRoutesWithStops();
+                } else {
+                        routes = routeRepository.findActiveRoutesWithStopsByNetwork(network);
+                }
+
+                return routes.stream()
+                                .map(r -> new RouteSummaryDTO(
+                                                r.getId(), r.getName(), r.getRouteRef(),
+                                                r.getNetwork(), r.getIsVerified(), r.getRiskLevel()))
+                                .toList();
+        }
+
+        // 3. Buscar rutas específicamente por nombre de empresa
+        public List<RouteSummaryDTO> getRoutesByCompanyName(String name) {
+                List<TransportRoute> routes = routeRepository.findActiveRoutesWithStopsByNameContaining(name);
+                return routes.stream()
+                                .map(r -> new RouteSummaryDTO(
+                                                r.getId(), r.getName(), r.getRouteRef(),
+                                                r.getNetwork(), r.getIsVerified(), r.getRiskLevel()))
+                                .toList();
+        }
+
+        // 4. Obtener información básica de la ruta para el Detalle
+        public RouteBasicInfoDTO getRouteBasicInfo(Integer routeId) {
+                TransportRoute route = routeRepository.findById(routeId)
+                                .orElseThrow(() -> new RuntimeException("Ruta no encontrada"));
+                
+                return new RouteBasicInfoDTO(route.getId(), route.getName(), route.getRouteRef());
+        }
+
+        // 5. Obtener los puntos para dibujar la línea en MapKit
         public RouteDetailDTO getRouteDetailsForMap(Integer routeId) {
                 TransportRoute route = routeRepository.findById(routeId)
                                 .orElseThrow(() -> new RuntimeException("Ruta no encontrada"));

@@ -22,6 +22,16 @@ public interface TransportRouteRepository extends JpaRepository<TransportRoute, 
                         @org.springframework.data.repository.query.Param("name") String name,
                         @org.springframework.data.repository.query.Param("ref") String ref);
 
+        @org.springframework.data.jpa.repository.Query("SELECT DISTINCT r FROM TransportRoute r INNER JOIN r.routeStops rs WHERE r.status = 'ACTIVA'")
+        List<TransportRoute> findAllActiveRoutesWithStops();
+
+        @org.springframework.data.jpa.repository.Query("SELECT DISTINCT r FROM TransportRoute r INNER JOIN r.routeStops rs WHERE r.status = 'ACTIVA' AND LOWER(r.network) = LOWER(:network)")
+        List<TransportRoute> findActiveRoutesWithStopsByNetwork(@org.springframework.data.repository.query.Param("network") String network);
+
+        @org.springframework.data.jpa.repository.Query("SELECT DISTINCT r FROM TransportRoute r INNER JOIN r.routeStops rs WHERE r.status = 'ACTIVA' AND LOWER(r.name) LIKE LOWER(CONCAT('%', :name, '%'))")
+        List<TransportRoute> findActiveRoutesWithStopsByNameContaining(@org.springframework.data.repository.query.Param("name") String name);
+
+
         // Filtros directos para panel administrador (Paginados)
         @org.springframework.data.jpa.repository.Query("SELECT DISTINCT r FROM TransportRoute r INNER JOIN RouteStop rs ON rs.route = r")
         org.springframework.data.domain.Page<TransportRoute> findAllRoutesWithStops(
